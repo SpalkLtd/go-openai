@@ -1,8 +1,8 @@
 package openai_test
 
 import (
-	"github.com/sashabaranov/go-openai"
-	"github.com/sashabaranov/go-openai/internal/test"
+	"github.com/SpalkLtd/go-openai"
+	"github.com/SpalkLtd/go-openai/internal/test"
 )
 
 func setupOpenAITestServer() (client *openai.Client, server *test.ServerTest, teardown func()) {

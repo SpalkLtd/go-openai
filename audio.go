@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	utils "github.com/sashabaranov/go-openai/internal"
+	utils "github.com/SpalkLtd/go-openai/internal"
 )
 
 // Whisper Defines the models provided by OpenAI to use when processing audio with OpenAI.
@@ -38,10 +38,24 @@ type AudioRequest struct {
 	// Reader is an optional io.Reader when you do not want to use an existing file.
 	Reader io.Reader
 
-	Prompt      string // For translation, it should be in English
-	Temperature float32
-	Language    string // For translation, just do not use it. It seems "en" works, not confirmed...
-	Format      AudioResponseFormat
+	Prompt                 string // For translation, it should be in English
+	Temperature            float32
+	Language               string // For translation, just do not use it. It seems "en" works, not confirmed...
+	Format                 AudioResponseFormat
+	TimestampGranularities []TimestampGranularity
+}
+
+type TimestampGranularity string
+
+const (
+	TimestampGranularitySegment TimestampGranularity = "segment"
+	TimestampGranularityWord    TimestampGranularity = "word"
+)
+
+type AudioResponseWord struct {
+	Word  string  `json:"word"`
+	Start float64 `json:"start"`
+	End   float64 `json:"end"`
 }
 
 // AudioResponse represents a response structure for audio API.
@@ -50,17 +64,18 @@ type AudioResponse struct {
 	Language string  `json:"language"`
 	Duration float64 `json:"duration"`
 	Segments []struct {
-		ID               int     `json:"id"`
-		Seek             int     `json:"seek"`
-		Start            float64 `json:"start"`
-		End              float64 `json:"end"`
-		Text             string  `json:"text"`
-		Tokens           []int   `json:"tokens"`
-		Temperature      float64 `json:"temperature"`
-		AvgLogprob       float64 `json:"avg_logprob"`
-		CompressionRatio float64 `json:"compression_ratio"`
-		NoSpeechProb     float64 `json:"no_speech_prob"`
-		Transient        bool    `json:"transient"`
+		ID               int                 `json:"id"`
+		Seek             int                 `json:"seek"`
+		Start            float64             `json:"start"`
+		End              float64             `json:"end"`
+		Text             string              `json:"text"`
+		Tokens           []int               `json:"tokens"`
+		Temperature      float64             `json:"temperature"`
+		AvgLogprob       float64             `json:"avg_logprob"`
+		CompressionRatio float64             `json:"compression_ratio"`
+		NoSpeechProb     float64             `json:"no_speech_prob"`
+		Transient        bool                `json:"transient"`
+		Words            []AudioResponseWord `json:"words"`
 	} `json:"segments"`
 	Text string `json:"text"`
 
@@ -176,6 +191,18 @@ func audioMultipartForm(request AudioRequest, b utils.FormBuilder) error {
 		err = b.WriteField("language", request.Language)
 		if err != nil {
 			return fmt.Errorf("writing language: %w", err)
+		}
+	}
+
+	if len(request.TimestampGranularities) > 0 {
+		if request.Format != AudioResponseFormatJSON {
+			return fmt.Errorf("timestamp granularities are only supported with JSON response format")
+		}
+		for _, granularity := range request.TimestampGranularities {
+			err = b.WriteField("timestamp_granularities[]", string(granularity))
+			if err != nil {
+				return fmt.Errorf("writing timestamp granularities: %w", err)
+			}
 		}
 	}
 
