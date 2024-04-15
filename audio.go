@@ -195,7 +195,7 @@ func audioMultipartForm(request AudioRequest, b utils.FormBuilder) error {
 	}
 
 	if len(request.TimestampGranularities) > 0 {
-		if request.Format != AudioResponseFormatJSON {
+		if request.Format != AudioResponseFormatVerboseJSON {
 			return fmt.Errorf("timestamp granularities are only supported with JSON response format")
 		}
 		for _, granularity := range request.TimestampGranularities {
