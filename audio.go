@@ -80,6 +80,7 @@ type AudioResponse struct {
 	Duration float64                `json:"duration"`
 	Segments []AudioResponseSegment `json:"segments"`
 	Text     string                 `json:"text"`
+	Words    []AudioResponseWord    `json:"words"`
 
 	httpHeader
 }
