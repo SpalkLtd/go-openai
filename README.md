@@ -4,12 +4,10 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/SpalkLtd/go-openai)](https://goreportcard.com/report/github.com/SpalkLtd/go-openai)
 [![codecov](https://codecov.io/gh/SpalkLtd/go-openai/branch/master/graph/badge.svg?token=bCbIfHLIsW)](https://codecov.io/gh/SpalkLtd/go-openai)
 
-This library provides unofficial Go clients for [OpenAI API](https://platform.openai.com/). We support:
-
--   ChatGPT
--   GPT-3, GPT-4
--   DALL·E 2
--   Whisper
+* ChatGPT 4o, o1
+* GPT-3, GPT-4
+* DALL·E 2, DALL·E 3
+* Whisper
 
 ## Installation
 
@@ -143,7 +141,7 @@ func main() {
 	ctx := context.Background()
 
 	req := openai.CompletionRequest{
-		Model:     openai.GPT3Ada,
+		Model:     openai.GPT3Babbage002,
 		MaxTokens: 5,
 		Prompt:    "Lorem ipsum",
 	}
@@ -177,7 +175,7 @@ func main() {
 	ctx := context.Background()
 
 	req := openai.CompletionRequest{
-		Model:     openai.GPT3Ada,
+		Model:     openai.GPT3Babbage002,
 		MaxTokens: 5,
 		Prompt:    "Lorem ipsum",
 		Stream:    true,
@@ -643,7 +641,7 @@ FunctionDefinition{
       },
       "unit": {
         Type: jsonschema.String,
-        Enum: []string{"celcius", "fahrenheit"},
+        Enum: []string{"celsius", "fahrenheit"},
       },
     },
     Required: []string{"location"},
@@ -753,6 +751,70 @@ func main() {
 }
 ```
 
+</details>
+
+<details>
+<summary>Structured Outputs</summary>
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/sashabaranov/go-openai"
+	"github.com/sashabaranov/go-openai/jsonschema"
+)
+
+func main() {
+	client := openai.NewClient("your token")
+	ctx := context.Background()
+
+	type Result struct {
+		Steps []struct {
+			Explanation string `json:"explanation"`
+			Output      string `json:"output"`
+		} `json:"steps"`
+		FinalAnswer string `json:"final_answer"`
+	}
+	var result Result
+	schema, err := jsonschema.GenerateSchemaForType(result)
+	if err != nil {
+		log.Fatalf("GenerateSchemaForType error: %v", err)
+	}
+	resp, err := client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+		Model: openai.GPT4oMini,
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: "You are a helpful math tutor. Guide the user through the solution step by step.",
+			},
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: "how can I solve 8x + 7 = -23",
+			},
+		},
+		ResponseFormat: &openai.ChatCompletionResponseFormat{
+			Type: openai.ChatCompletionResponseFormatTypeJSONSchema,
+			JSONSchema: &openai.ChatCompletionResponseFormatJSONSchema{
+				Name:   "math_reasoning",
+				Schema: schema,
+				Strict: true,
+			},
+		},
+	})
+	if err != nil {
+		log.Fatalf("CreateChatCompletion error: %v", err)
+	}
+	err = schema.Unmarshal(resp.Choices[0].Message.Content, &result)
+	if err != nil {
+		log.Fatalf("Unmarshal schema error: %v", err)
+	}
+	fmt.Println(result)
+}
+```
 </details>
 See the `examples/` folder for more.
 

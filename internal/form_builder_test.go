@@ -1,8 +1,7 @@
 package openai //nolint:testpackage // testing private field
 
 import (
-	"github.com/SpalkLtd/go-openai/internal/test"
-	"github.com/SpalkLtd/go-openai/internal/test/checks"
+	"github.com/sashabaranov/go-openai/internal/test/checks"
 
 	"bytes"
 	"errors"
@@ -20,15 +19,11 @@ func (*failingWriter) Write([]byte) (int, error) {
 }
 
 func TestFormBuilderWithFailingWriter(t *testing.T) {
-	dir, cleanup := test.CreateTestDirectory(t)
-	defer cleanup()
-
-	file, err := os.CreateTemp(dir, "")
+	file, err := os.CreateTemp(t.TempDir(), "")
 	if err != nil {
-		t.Errorf("Error creating tmp file: %v", err)
+		t.Fatalf("Error creating tmp file: %v", err)
 	}
 	defer file.Close()
-	defer os.Remove(file.Name())
 
 	builder := NewFormBuilder(&failingWriter{})
 	err = builder.CreateFormFile("file", file)
@@ -36,15 +31,11 @@ func TestFormBuilderWithFailingWriter(t *testing.T) {
 }
 
 func TestFormBuilderWithClosedFile(t *testing.T) {
-	dir, cleanup := test.CreateTestDirectory(t)
-	defer cleanup()
-
-	file, err := os.CreateTemp(dir, "")
+	file, err := os.CreateTemp(t.TempDir(), "")
 	if err != nil {
-		t.Errorf("Error creating tmp file: %v", err)
+		t.Fatalf("Error creating tmp file: %v", err)
 	}
 	file.Close()
-	defer os.Remove(file.Name())
 
 	body := &bytes.Buffer{}
 	builder := NewFormBuilder(body)
