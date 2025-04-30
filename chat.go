@@ -270,12 +270,35 @@ type ChatCompletionRequest struct {
 	// https://platform.openai.com/docs/api-reference/chat/create#chat-create-store
 	Store bool `json:"store,omitempty"`
 	// Controls effort on reasoning for reasoning models. It can be set to "low", "medium", or "high".
+	// This is a deprecated field and will be removed in the future.
 	ReasoningEffort string `json:"reasoning_effort,omitempty"`
+
+	// Reasoning is a structure that contains the reasoning effort level and summary.
+	Reasoning *Reasoning `json:"reasoning,omitempty"`
 	// Metadata to store with the completion.
 	Metadata map[string]string `json:"metadata,omitempty"`
 	// Configuration for a predicted output.
 	Prediction *Prediction `json:"prediction,omitempty"`
 }
+
+type Reasoning struct {
+	// Effort is the effort level for reasoning.
+	// It can be set to "low", "medium", or "high".
+	Effort string `json:"effort,omitempty"`
+	// Summary is whether to include a summary of the reasoning process.
+	Summary ReasoningSummary `json:"summary,omitempty"`
+}
+
+type ReasoningSummary string
+
+const (
+	// ReasoningSummaryNone means no summary will be provided.
+	ReasoningSummaryNone ReasoningSummary = "none"
+	// ReasoningSummaryAuto means the summary will be automatically generated.
+	ReasoningSummaryAuto ReasoningSummary = "auto"
+	// ReasoningSummaryDetailed means a detailed summary will be provided.
+	ReasoningSummaryDetailed ReasoningSummary = "detailed"
+)
 
 type StreamOptions struct {
 	// If set, an additional chunk will be streamed before the data: [DONE] message.
